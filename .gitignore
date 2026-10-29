@@ -1,0 +1,12 @@
+.venv/
+build/
+dist/
+__pycache__/
+*.pyc
+*.spec
+# Müşteri / örnek verileri asla repoya girmesin
+*.rar
+*.zip
+*.7z
+*.pdf
+contents/

@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QFileDialog, QFrame, QHB
                                QWidget)
 
 import edefter
+import excel
 
 APP_NAME = "e-Defter PDF"
 PARALLEL = 3  # aynı anda basılan belge sayısı
@@ -160,7 +161,8 @@ class Converter:
 
 
 class MainWindow(QWidget):
-    def __init__(self, auto: Path | None = None, out_parent: Path | None = None, merge=False, make_zip=True):
+    def __init__(self, auto: Path | None = None, out_parent: Path | None = None, merge=False, make_zip=True,
+                 make_excel=True):
         super().__init__()
         self.setWindowTitle(APP_NAME)
         self.resize(720, 560)
@@ -181,6 +183,8 @@ class MainWindow(QWidget):
 
         self.cb_merge = QCheckBox("Her ay için ayrıca tek birleşik PDF oluştur (\"Tümü.pdf\")")
         self.cb_merge.setChecked(merge)
+        self.cb_excel = QCheckBox("Excel çıktısı da oluştur (her yıl için Yevmiye, Kebir, Mizan)")
+        self.cb_excel.setChecked(make_excel)
         self.cb_zip = QCheckBox("Sonucu ayrıca .zip olarak da kaydet")
         self.cb_zip.setChecked(make_zip)
 
@@ -209,6 +213,7 @@ class MainWindow(QWidget):
         lay.addWidget(sub)
         lay.addWidget(self.drop)
         lay.addWidget(self.cb_merge)
+        lay.addWidget(self.cb_excel)
         lay.addWidget(self.cb_zip)
         lay.addWidget(self.bar)
         lay.addLayout(row)
@@ -232,6 +237,7 @@ class MainWindow(QWidget):
     def _busy(self, on: bool):
         self.drop.setEnabled(not on)
         self.cb_merge.setEnabled(not on)
+        self.cb_excel.setEnabled(not on)
         self.cb_zip.setEnabled(not on)
 
     @staticmethod
@@ -295,6 +301,11 @@ class MainWindow(QWidget):
                 QApplication.processEvents()
                 made = edefter.merge_monthly(self.out_folder, self.scan.docs, done)
                 self.log(f"{len(made)} aylık birleşik PDF oluşturuldu.")
+            if self.cb_excel.isChecked():
+                self.status.setText("Excel dosyaları oluşturuluyor…")
+                QApplication.processEvents()
+                made = excel.export(self.out_folder, self.scan.docs)
+                self.log(f"{len(made)} Excel dosyası oluşturuldu.")
             zip_path = None
             if self.cb_zip.isChecked() and done:
                 self.status.setText("ZIP hazırlanıyor…")
@@ -338,6 +349,7 @@ def main():
     ap.add_argument("--out", help="Çıktı klasörünün konacağı yer (varsayılan: arşivin yanı)")
     ap.add_argument("--merge", action="store_true", help="Aylık birleşik PDF de üret")
     ap.add_argument("--no-zip", action="store_true")
+    ap.add_argument("--no-excel", action="store_true")
     args = ap.parse_args()
 
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
@@ -347,7 +359,8 @@ def main():
     app.setStyle("Fusion")
     app.styleHints().setColorScheme(Qt.ColorScheme.Light)
     w =MainWindow(Path(args.archive) if args.archive else None,
-                   Path(args.out) if args.out else None, args.merge, not args.no_zip)
+                   Path(args.out) if args.out else None, args.merge, not args.no_zip,
+                   not args.no_excel)
     w.show()
     sys.exit(app.exec())
 

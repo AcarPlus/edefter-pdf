@@ -13,6 +13,9 @@ e-Defter arşivini (.zip / .rar / .7z) bilgisayardan çıkmadan PDF'e çeviren m
 - "iptal edilen / silinen" klasörlerindekiler ayın içinde `İptal edilenler/` altına konur.
 - Arşivdeki diğer PDF'ler (muhasebe programı raporları) `Ek - …pdf` olarak ayın klasörüne kopyalanır.
 - "Tümü.pdf" seçeneği her ayın belgelerini tek dosyada birleştirir.
+- Excel seçeneği her mali yıl için `VKN/Yıl/<yıl> Defter (Yevmiye-Kebir-Mizan).xlsx` yazar:
+  **Yevmiye** (tüm satırlar), **Kebir** (hesap/alt hesap sırasıyla, kümülatif toplam ve bakiye),
+  **Mizan (Ana Hesap)** ve **Mizan (Alt Hesap)**. İptal edilenler Excel'e alınmaz.
 
 ## Nasıl çalışır
 Her XML, arşivle gelen GİB XSLT şablonuyla (yoksa `xslt/` içindeki yedekle) Saxon kullanılarak HTML'e,

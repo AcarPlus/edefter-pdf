@@ -1,5 +1,6 @@
 # e-Defter PDF exe derlemesi: .\build.ps1  →  build\dist\eDefterPDF\ ve build\eDefterPDF-windows.zip
-$ErrorActionPreference = 'Stop'
+# PyInstaller bilgi satırlarını stderr'e yazar; PS 5.1 bunları hata sayıp durmasın diye 'Stop' yok,
+# başarı $LASTEXITCODE ile denetlenir.
 Set-Location $PSScriptRoot
 if (-not (Test-Path .venv)) {
     python -m venv .venv

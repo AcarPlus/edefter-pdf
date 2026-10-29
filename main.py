@@ -38,7 +38,8 @@ class DropArea(QLabel):
         self._style(False)
 
     def _idle_text(self):
-        self.setText("e-Defter arşivini (.zip / .rar) buraya sürükleyip bırakın\n\nveya seçmek için tıklayın")
+        self.setText("e-Defter arşivini (.zip / .rar) ya da klasörünü buraya sürükleyip bırakın\n\n"
+                     "veya arşiv seçmek için tıklayın")
 
     def _style(self, hover: bool):
         border = "#2f7d4f" if hover else "#9aa5b1"
@@ -51,7 +52,7 @@ class DropArea(QLabel):
         urls = event.mimeData().urls()
         if len(urls) == 1 and urls[0].isLocalFile():
             p = urls[0].toLocalFile()
-            if Path(p).suffix.lower() in edefter.ARCHIVE_EXTS:
+            if Path(p).is_dir() or Path(p).suffix.lower() in edefter.ARCHIVE_EXTS:
                 return p
         return None
 
@@ -180,6 +181,11 @@ class MainWindow(QWidget):
 
         self.drop = DropArea()
         self.drop.fileChosen.connect(self.start)
+        self.btn_folder = QPushButton("Klasör seç…")
+        self.btn_folder.clicked.connect(self._choose_folder)
+        pick = QHBoxLayout()
+        pick.addStretch(1)
+        pick.addWidget(self.btn_folder)
 
         self.cb_merge = QCheckBox("Her ay için ayrıca tek birleşik PDF oluştur (\"Tümü.pdf\")")
         self.cb_merge.setChecked(merge)
@@ -212,6 +218,7 @@ class MainWindow(QWidget):
         lay.addWidget(title)
         lay.addWidget(sub)
         lay.addWidget(self.drop)
+        lay.addLayout(pick)
         lay.addWidget(self.cb_merge)
         lay.addWidget(self.cb_excel)
         lay.addWidget(self.cb_zip)
@@ -236,6 +243,7 @@ class MainWindow(QWidget):
 
     def _busy(self, on: bool):
         self.drop.setEnabled(not on)
+        self.btn_folder.setEnabled(not on)
         self.cb_merge.setEnabled(not on)
         self.cb_excel.setEnabled(not on)
         self.cb_zip.setEnabled(not on)
@@ -249,6 +257,11 @@ class MainWindow(QWidget):
             n += 1
         return q
 
+    def _choose_folder(self):
+        p = QFileDialog.getExistingDirectory(self, "e-Defter klasörü seç")
+        if p:
+            self.start(p)
+
     # ------------------------------------------------------------ akış
     def start(self, archive_path: str):
         archive = Path(archive_path)
@@ -258,21 +271,26 @@ class MainWindow(QWidget):
         self.t0 = time.time()
         self.archive = archive
         parent = self.out_parent_override or archive.parent
-        self.out_folder = self._free_path(parent / f"{archive.stem} - PDF")
-        self.log(f"Arşiv: {archive.name}")
-        self.status.setText("Arşiv açılıyor…")
+        self.out_folder = self._free_path(parent / f"{archive.name if archive.is_dir() else archive.stem} - PDF")
+        is_dir = archive.is_dir()
+        self.log(f"{'Klasör' if is_dir else 'Arşiv'}: {archive.name}")
+        self.status.setText("Klasör okunuyor…" if is_dir else "Arşiv açılıyor…")
         QApplication.processEvents()
         try:
             self.work = Path(tempfile.mkdtemp(prefix="edefter_"))
             src = self.work / "src"
-            edefter.extract_archive(archive, src)
+            if is_dir:
+                # Kullanıcının klasörüne dokunmamak için kopya üzerinde çalışılır (iç zip'ler oraya açılır)
+                edefter.copy_folder(archive, src)
+            else:
+                edefter.extract_archive(archive, src)
             edefter.expand_nested_zips(src)
             scan = edefter.scan(src)
         except Exception as exc:
-            self._abort(f"Arşiv açılamadı:\n{exc}")
+            self._abort(f"{'Klasör okunamadı' if is_dir else 'Arşiv açılamadı'}:\n{exc}")
             return
         if not scan.docs:
-            self._abort("Bu arşivde e-Defter XML dosyası bulunamadı.\n"
+            self._abort(f"Bu {'klasörde' if is_dir else 'arşivde'} e-Defter XML dosyası bulunamadı.\n"
                         "(Beklenen ad örneği: 1234567890-202401-Y-000000.xml)")
             return
         months = len({(d.vkn, d.year, d.month) for d in scan.docs})
@@ -345,7 +363,7 @@ class MainWindow(QWidget):
 
 def main():
     ap = argparse.ArgumentParser(description=APP_NAME)
-    ap.add_argument("archive", nargs="?", help="Doğrudan işlenecek arşiv (test/otomasyon)")
+    ap.add_argument("archive", nargs="?", help="Doğrudan işlenecek arşiv veya klasör (test/otomasyon)")
     ap.add_argument("--out", help="Çıktı klasörünün konacağı yer (varsayılan: arşivin yanı)")
     ap.add_argument("--merge", action="store_true", help="Aylık birleşik PDF de üret")
     ap.add_argument("--no-zip", action="store_true")

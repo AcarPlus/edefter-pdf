@@ -137,6 +137,16 @@ def extract_archive(path: Path, dest: Path) -> None:
         raise RuntimeError(f"Arşiv açılamadı: {res.stderr.strip() or res.returncode}")
 
 
+def copy_folder(src: Path, dest: Path) -> None:
+    """Klasör girdisi: yalnızca işe yarayan dosyaları (xml, xslt, zip, pdf) kopyalar."""
+    keep = {".xml", ".xslt", ".xsl", ".zip", ".pdf"}
+    for p in src.rglob("*"):
+        if p.is_file() and p.suffix.lower() in keep:
+            target = dest / p.relative_to(src)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(p, target)
+
+
 def expand_nested_zips(root: Path, max_depth: int = 3) -> None:
     """İçteki zip'leri yanlarına '<ad>.__zip' klasörüne açar (tekrarlar sonra elenir)."""
     done: set[Path] = set()

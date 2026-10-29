@@ -1,11 +1,11 @@
 # e-Defter PDF
 
-e-Defter arşivini (.zip / .rar / .7z) bilgisayardan çıkmadan PDF'e çeviren masaüstü uygulaması.
+e-Defter arşivini (.zip / .rar / .7z) veya klasörünü bilgisayardan çıkmadan PDF'e çeviren masaüstü uygulaması.
 İnternet bağlantısı kullanmaz.
 
 ## Kullanım
 1. Masaüstündeki **e-Defter PDF** kısayolunu açın.
-2. Arşivi pencereye sürükleyin (veya tıklayıp seçin).
+2. Arşivi (.zip / .rar) ya da açılmış klasörü pencereye sürükleyin (veya tıklayıp / "Klasör seç…" ile seçin). Klasör girdisinde kaynak klasöre hiçbir şey yazılmaz.
 3. Bitince **Klasörü aç**'a basın. Çıktı arşivin yanına `<arşiv adı> - PDF` klasörü (ve isteğe bağlı .zip) olarak yazılır.
 
 Çıktı düzeni: `VKN/Yıl/Ay/2024-04 Yevmiye Defteri.pdf`, `… Kebir Defteri.pdf`, `… Yevmiye Beratı.pdf`,
